@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
+#include "Components/TimelineComponent.h"
+#include "Components/BoxComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "InteractableThing.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
 #include "Door.generated.h"
 
 UCLASS()
@@ -34,6 +36,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UInstancedStaticMeshComponent* TheMeshFrame;
 
+	//collider for door
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UBoxComponent* Collider;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
+	UCurveFloat* DoorOpenCurve;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
 	float WidthOfDoor = 200;
 
@@ -45,6 +54,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	virtual void OnAnimUpdate(float val);
+
+	UTimelineComponent* DoorAnim;
+	bool IsDoorFlipped = false;
+	bool IsDoorOpen = false;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
