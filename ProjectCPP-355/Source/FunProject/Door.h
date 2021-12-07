@@ -44,6 +44,12 @@ public:
 	UCurveFloat* DoorOpenCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
+	UStaticMesh* DoorMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
+	bool InteractByButton = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
 	float WidthOfDoor = 200;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door Stuff")
@@ -67,4 +73,6 @@ public:
 	virtual void OnConstruction(const FTransform &xform) override;
 
 	virtual void Interact();
+	virtual void ButtonOpen();
+	virtual void ButtonClose();
 };

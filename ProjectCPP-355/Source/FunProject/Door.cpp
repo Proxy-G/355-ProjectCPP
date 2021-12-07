@@ -24,13 +24,6 @@ ADoor::ADoor()
 	TheMeshFrame = CreateDefaultSubobject<UInstancedStaticMeshComponent>(FName("TheMeshFrame"));
 	TheMeshFrame->SetupAttachment(TheRoot);
 
-	ConstructorHelpers::FObjectFinder<UStaticMesh> TheCubeMesh(TEXT("/Game/Art/Meshes/1M_Cube"));
-	if (TheCubeMesh.Object)
-	{
-		TheMeshDoor->SetStaticMesh(TheCubeMesh.Object);
-		TheMeshFrame->SetStaticMesh(TheCubeMesh.Object);
-	}
-
 	DoorAnim = CreateDefaultSubobject<UTimelineComponent>(FName("DoorAnim"));
 
 
@@ -62,7 +55,6 @@ void ADoor::BeginPlay()
 void ADoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ADoor::OnConstruction(const FTransform& xform)
@@ -78,6 +70,9 @@ void ADoor::OnConstruction(const FTransform& xform)
 	Collider->SetRelativeLocation(FVector(0, 0, HeightOfDoor / 2));
 	Collider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
+	TheMeshDoor->SetStaticMesh(DoorMesh);
+	TheMeshFrame->SetStaticMesh(DoorMesh);
+
 	TheMeshFrame->ClearInstances();
 	TheMeshFrame->AddInstance(FTransform(FRotator(0, 0, 0), FVector(WidthOfDoor / 2 + DepthOfDoor / 2, 0, HeightOfDoor / 2), FVector(DepthOfDoor * 1.25f, DepthOfDoor * 1.25f, HeightOfDoor) / 100));
 	TheMeshFrame->AddInstance(FTransform(FRotator(0, 0, 0), FVector(-WidthOfDoor / 2 - DepthOfDoor / 2, 0, HeightOfDoor / 2), FVector(DepthOfDoor * 1.25f, DepthOfDoor * 1.25f, HeightOfDoor) / 100));
@@ -85,27 +80,57 @@ void ADoor::OnConstruction(const FTransform& xform)
 
 void ADoor::Interact()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, "Player interacted with door.");
-
-	if (IsDoorOpen)
+	if (!InteractByButton)
 	{
-		DoorAnim->Reverse();
-		IsDoorOpen = false;
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, "Player interacted with door.");
+
+		if (IsDoorOpen)
+		{
+			DoorAnim->Reverse();
+			IsDoorOpen = false;
+		}
+		else
+		{
+			//TODO: Determine what side the player is one to set IsDoorFlipped
+			ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
+			FVector VecToDoor = GetActorLocation() - Player->GetActorLocation();
+			VecToDoor.Normalize();
+
+			float align = FVector::DotProduct(VecToDoor, GetActorRightVector());
+			IsDoorFlipped = (align < 0);
+
+			DoorAnim->Play();
+			IsDoorOpen = true;
+		}
 	}
-	else
-	{
-		//TODO: Determine what side the player is one to set IsDoorFlipped
-		ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-
-		FVector VecToDoor = GetActorLocation() - Player->GetActorLocation();
-		VecToDoor.Normalize();
-
-		float align = FVector::DotProduct(VecToDoor, GetActorRightVector());
-		IsDoorFlipped = (align < 0);
-
-		DoorAnim->Play();
-		IsDoorOpen = true;
-	}
-
-	
 }
+
+void ADoor::ButtonOpen()
+{
+	if (InteractByButton)
+	{
+		if (!IsDoorOpen)
+		{
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, "Button pressed. Door open.");
+			
+			DoorAnim->Play();
+			IsDoorOpen = true;
+		}
+	}
+}
+
+void ADoor::ButtonClose()
+{
+	if (InteractByButton)
+	{
+		if (IsDoorOpen)
+		{
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, "Button not pressed. Door closed.");
+			
+			DoorAnim->Reverse();
+			IsDoorOpen = false;
+		}
+	}
+}
+
